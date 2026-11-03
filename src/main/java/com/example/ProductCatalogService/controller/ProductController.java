@@ -2,7 +2,9 @@ package com.example.ProductCatalogService.controller;
 
 import com.example.ProductCatalogService.dto.CategoryDto;
 import com.example.ProductCatalogService.dto.ProductDto;
+import com.example.ProductCatalogService.dto.ProductPitchDto;
 import com.example.ProductCatalogService.model.Product;
+import com.example.ProductCatalogService.service.PitchService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,9 +20,11 @@ import java.util.List;
 public class ProductController {
 
     private final IproductService productService;
+    private final PitchService pitchService;
 
-    public ProductController(IproductService productService) {
+    public ProductController(IproductService productService, PitchService pitchService) {
         this.productService = productService;
+        this.pitchService = pitchService;
     }
 
     @GetMapping
@@ -44,6 +48,7 @@ public class ProductController {
          return new ResponseEntity<>(from(product),HttpStatus.OK);
     }
 
+
     private ProductDto from(Product product) {
         ProductDto productDto = new ProductDto();
         productDto.setName(product.getName());
@@ -58,5 +63,23 @@ public class ProductController {
         productDto.setCategory(categoryDto);
         return productDto;
     }
+
+    @GetMapping("/{id}/pitch")
+    public ResponseEntity<ProductPitchDto> generatePitch(@PathVariable Long id) {
+        if(id<0) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+        Product product = productService.getProductById(id);
+        if(product==null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        ProductPitchDto productPitchDto = new ProductPitchDto();
+        productPitchDto.setId(product.getId());
+        productPitchDto.setPitch(pitchService.generatePitch(product));
+        return new ResponseEntity<>(productPitchDto,HttpStatus.OK);
+    }
+
 
 }
