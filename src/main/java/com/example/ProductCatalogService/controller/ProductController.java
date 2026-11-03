@@ -5,12 +5,12 @@ import com.example.ProductCatalogService.dto.ProductDto;
 import com.example.ProductCatalogService.dto.ProductPitchDto;
 import com.example.ProductCatalogService.model.Product;
 import com.example.ProductCatalogService.service.PitchService;
+import com.example.ProductCatalogService.service.StorageProductService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import com.example.ProductCatalogService.service.IproductService;
 
 import java.util.List;
@@ -21,10 +21,14 @@ public class ProductController {
 
     private final IproductService productService;
     private final PitchService pitchService;
+    private final IproductService storageService;
 
-    public ProductController(IproductService productService, PitchService pitchService) {
+    public ProductController(  @Qualifier("dummyProductService")  IproductService productService,
+                               PitchService pitchService,
+                               @Qualifier("storageService") IproductService storageService) {
         this.productService = productService;
         this.pitchService = pitchService;
+       this.storageService = storageService;
     }
 
     @GetMapping
@@ -40,12 +44,30 @@ public class ProductController {
          {
             return  new ResponseEntity<>(HttpStatus.BAD_REQUEST);
          }
-         Product product = productService.getProductById(id);
+         Product product = storageService.getProductById(id);
          if(product==null)
          {
              return  new ResponseEntity<>(HttpStatus.NOT_FOUND);
          }
          return new ResponseEntity<>(from(product),HttpStatus.OK);
+    }
+
+    @PostMapping
+    public ResponseEntity<ProductDto> createProduct(@RequestBody ProductDto productDto)
+    {
+        Product product = storageService.createProduct(productDto);
+        return new ResponseEntity<>(from(product),HttpStatus.CREATED);
+    }
+
+    @DeleteMapping("{id}")
+    public ResponseEntity<Void> deleteByProductId(@PathVariable Long id)
+    {
+        boolean isDeleted = storageService.deleteByProductId(id);
+        if(isDeleted)
+        {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
 
@@ -69,12 +91,10 @@ public class ProductController {
         if(id<0) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-
         Product product = productService.getProductById(id);
         if(product==null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-
         ProductPitchDto productPitchDto = new ProductPitchDto();
         productPitchDto.setId(product.getId());
         productPitchDto.setPitch(pitchService.generatePitch(product));
