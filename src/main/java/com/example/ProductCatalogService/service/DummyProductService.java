@@ -1,6 +1,7 @@
 package com.example.ProductCatalogService.service;
 
 import com.example.ProductCatalogService.dto.DummyJsonProductDto;
+import com.example.ProductCatalogService.dto.ProductDto;
 import com.example.ProductCatalogService.model.Category;
 import com.example.ProductCatalogService.model.Product;
 import org.springframework.boot.restclient.RestTemplateBuilder;
@@ -11,7 +12,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 
-@Service
+@Service("dummyProductService")
 public class DummyProductService implements  IproductService{
 
     private final RestTemplate restTemplate;
@@ -35,6 +36,16 @@ public class DummyProductService implements  IproductService{
             return null;
         }
         return null;
+    }
+
+    @Override
+    public Product createProduct(ProductDto productDto) {
+        return null;
+    }
+
+    @Override
+    public boolean deleteByProductId(Long id) {
+        return false;
     }
 
     private Product from(DummyJsonProductDto dto) {
