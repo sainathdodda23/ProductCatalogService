@@ -7,12 +7,17 @@ import com.example.ProductCatalogService.model.Product;
 import com.example.ProductCatalogService.service.PitchService;
 import com.example.ProductCatalogService.service.StorageProductService;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.example.ProductCatalogService.service.IproductService;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -23,19 +28,23 @@ public class ProductController {
     private final PitchService pitchService;
     private final IproductService storageService;
 
-    public ProductController(  @Qualifier("dummyProductService")  IproductService productService,
+    public ProductController(  @Qualifier("dummyProductService") IproductService productService,
                                PitchService pitchService,
-                               @Qualifier("storageService") IproductService storageService) {
+                               @Qualifier("storageService")  IproductService storageService) {
         this.productService = productService;
         this.pitchService = pitchService;
-       this.storageService = storageService;
+        this.storageService = storageService;
     }
 
     @GetMapping
-    List<Product> getAllProducts() {
-        return List.of();
+    List<ProductDto> getAllProducts() {
+        List<Product> products = storageService.getAllProducts();
+        List<ProductDto> productDtos = new ArrayList<>();
+        for(Product product : products) {
+            productDtos.add(from(product));
+        }
+        return productDtos;
     }
-
 
     @GetMapping("/{id}")
     public ResponseEntity<ProductDto> getProductById(@PathVariable("id") Long id)
@@ -91,7 +100,7 @@ public class ProductController {
         if(id<0) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        Product product = productService.getProductById(id);
+        Product product = storageService.getProductById(id);
         if(product==null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -99,6 +108,18 @@ public class ProductController {
         productPitchDto.setId(product.getId());
         productPitchDto.setPitch(pitchService.generatePitch(product));
         return new ResponseEntity<>(productPitchDto,HttpStatus.OK);
+    }
+
+    @GetMapping("/search")
+    public PagedModel<ProductDto> getProductsInRange(
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required=false) BigDecimal maxPrice,
+            Pageable pageable )
+    {
+        Page<ProductDto> products = storageService
+                 .getProductsInPriceRange(minPrice,maxPrice,pageable)
+                .map(x->from(x));
+        return new PagedModel<>(products);
     }
 
 

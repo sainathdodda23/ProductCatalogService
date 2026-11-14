@@ -7,9 +7,13 @@ import com.example.ProductCatalogService.model.enums.State;
 import com.example.ProductCatalogService.repository.CategoryRepository;
 import com.example.ProductCatalogService.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Service("storageService")
@@ -44,6 +48,19 @@ public class StorageProductService implements IproductService {
         product.setLastUpdatedAt(new Date());
         productRepository.save(product);
         return true;
+    }
+
+    @Override
+    public List<Product> getAllProducts() {
+        return productRepository.findAllProducts();
+    }
+
+    @Override
+    public Page<Product> getProductsInPriceRange(BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable) {
+        return productRepository.findByPriceBetweenAndState(minPrice,
+                maxPrice,
+                State.ACTIVE,
+                pageable);
     }
 
     private Category findOrCreateCategory(Category category) {
