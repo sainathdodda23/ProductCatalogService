@@ -508,7 +508,3 @@ Use Postman to test the following sequence:
 Sainath Dodda
 
 GitHub: https://github.com/sainathdodda23
-
-## License
-
-See the repository LICENSE file.
