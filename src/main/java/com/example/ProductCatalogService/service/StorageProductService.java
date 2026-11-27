@@ -1,6 +1,7 @@
 package com.example.ProductCatalogService.service;
 
 import com.example.ProductCatalogService.dto.ProductDto;
+import com.example.ProductCatalogService.mappers.ProductMapper;
 import com.example.ProductCatalogService.model.Category;
 import com.example.ProductCatalogService.model.Product;
 import com.example.ProductCatalogService.model.enums.State;
@@ -22,6 +23,7 @@ public class StorageProductService implements IproductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final ProductMapper productMapper;
 
     @Override
     public Product getProductById(Long id) {
@@ -30,7 +32,7 @@ public class StorageProductService implements IproductService {
 
     @Override
     public Product createProduct(ProductDto productDto) {
-        Product product = from(productDto);
+        Product product = productMapper.toEntity(productDto);
         product.setCategory(findOrCreateCategory(product.getCategory()));
         product.setCreatedAt(new Date());
         product.setLastUpdatedAt(new Date());
@@ -78,20 +80,4 @@ public class StorageProductService implements IproductService {
         return categoryRepository.save(category);
     }
 
-
-    private Product from(ProductDto dto) {
-        Product product = new Product();
-        product.setId(dto.getId());
-        product.setName(dto.getName());
-        product.setDescription(dto.getDescription());
-        product.setPrice(dto.getPrice());
-        product.setImageUrl(dto.getImageUrl());
-        if (dto.getCategory() != null) {
-            Category category = new Category();
-            category.setName(dto.getCategory().getName());
-            category.setDescription(dto.getCategory().getDescription());
-            product.setCategory(category);
-        }
-        return product;
-    }
 }
