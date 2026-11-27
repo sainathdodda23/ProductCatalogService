@@ -3,6 +3,7 @@ package com.example.ProductCatalogService.controller;
 import com.example.ProductCatalogService.dto.CategoryDto;
 import com.example.ProductCatalogService.dto.ProductDto;
 import com.example.ProductCatalogService.dto.ProductPitchDto;
+import com.example.ProductCatalogService.mappers.ProductMapper;
 import com.example.ProductCatalogService.model.Product;
 import com.example.ProductCatalogService.service.PitchService;
 import com.example.ProductCatalogService.service.StorageProductService;
@@ -27,13 +28,16 @@ public class ProductController {
     private final IproductService productService;
     private final PitchService pitchService;
     private final IproductService storageService;
+    private final ProductMapper productMapper;
 
-    public ProductController(  @Qualifier("dummyProductService") IproductService productService,
-                               PitchService pitchService,
-                               @Qualifier("storageService")  IproductService storageService) {
+    public ProductController(@Qualifier("dummyProductService") IproductService productService,
+                             PitchService pitchService,
+                             @Qualifier("storageService")  IproductService storageService,
+                             ProductMapper productMapper) {
         this.productService = productService;
         this.pitchService = pitchService;
         this.storageService = storageService;
+        this.productMapper = productMapper;
     }
 
     @GetMapping
@@ -41,7 +45,8 @@ public class ProductController {
         List<Product> products = storageService.getAllProducts();
         List<ProductDto> productDtos = new ArrayList<>();
         for(Product product : products) {
-            productDtos.add(from(product));
+            productDtos.add(productMapper.toDto(product));
+            
         }
         return productDtos;
     }
@@ -58,14 +63,14 @@ public class ProductController {
          {
              return  new ResponseEntity<>(HttpStatus.NOT_FOUND);
          }
-         return new ResponseEntity<>(from(product),HttpStatus.OK);
+         return new ResponseEntity<>(productMapper.toDto(product),HttpStatus.OK);
     }
 
     @PostMapping
     public ResponseEntity<ProductDto> createProduct(@RequestBody ProductDto productDto)
     {
         Product product = storageService.createProduct(productDto);
-        return new ResponseEntity<>(from(product),HttpStatus.CREATED);
+        return new ResponseEntity<>(productMapper.toDto(product),HttpStatus.CREATED);
     }
 
     @DeleteMapping("{id}")
@@ -77,22 +82,6 @@ public class ProductController {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    }
-
-
-    private ProductDto from(Product product) {
-        ProductDto productDto = new ProductDto();
-        productDto.setName(product.getName());
-        productDto.setDescription(product.getDescription());
-        productDto.setPrice(product.getPrice());
-
-        CategoryDto categoryDto = new CategoryDto();
-        categoryDto.setDescription(product.getCategory().getDescription());
-        categoryDto.setId(product.getCategory().getId());
-        categoryDto.setName(product.getCategory().getName());
-
-        productDto.setCategory(categoryDto);
-        return productDto;
     }
 
     @GetMapping("/{id}/pitch")
@@ -118,7 +107,7 @@ public class ProductController {
     {
         Page<ProductDto> products = storageService
                  .getProductsInPriceRange(minPrice,maxPrice,pageable)
-                .map(x->from(x));
+                .map(x->productMapper.toDto(x));
         return new PagedModel<>(products);
     }
 
